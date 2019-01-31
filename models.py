@@ -14,7 +14,7 @@ from keras.applications import VGG16, DenseNet121
 
 from keras.models import Sequential
 
-def med_residual(img_height, img_width):
+def Model_1(img_height, img_width):
     
     inp = Input(shape = (img_height,img_width,3))
     
@@ -79,8 +79,7 @@ def med_residual(img_height, img_width):
     
     return model 
 
-def med_2(img_height, img_width):
-    print("medium 2")
+def Model_2(img_height, img_width):
     model = Sequential()
     model.add(Conv2D(32, (5,5), padding = 'same', activation = 'relu', input_shape = (img_height, img_width, 3)))
     model.add(Conv2D(32,kernel_size=(3, 3), activation='relu',padding = 'same'))
@@ -102,7 +101,6 @@ def med_2(img_height, img_width):
     model.add(MaxPool2D(pool_size=(2, 2)))
     
     model.add(Dropout(0.4))
-    #model.add(BatchNormalization())
 
     model.add(Flatten())
     model.add(Dense(128, activation='relu'))
@@ -113,15 +111,13 @@ def med_2(img_height, img_width):
     model.compile(loss = 'categorical_crossentropy', optimizer = 'adam', metrics = ['accuracy'])
     return model
 
-def medium_model(img_height, img_width):
+def Model_3(img_height, img_width):
     inp = Input(shape = (img_height,img_width,3))
     x = inp
 
     x = Conv2D(32, (5,5), strides = 1, padding = 'same')(x)
-    #x = BatchNormalization()(x)
     x = Activation('relu')(x)
     x = Conv2D(32, (3,3), strides = 1, padding = 'same')(x)
-    #x = BatchNormalization()(x)
     x = Activation('relu')(x)
     x = BatchNormalization()(x)
 
@@ -129,10 +125,8 @@ def medium_model(img_height, img_width):
     x = Dropout(0.25)(x)
 
     x = Conv2D(64, (3,3), padding = 'same')(x)
-    #x = BatchNormalization()(x)
     x = Activation('relu')(x)    
     x = Conv2D(64, (3,3), padding = 'same')(x)
-    #x = BatchNormalization()(x)
     x = Activation('relu')(x)
     x = BatchNormalization()(x)
 
@@ -164,7 +158,7 @@ def medium_model(img_height, img_width):
 
 
 
-def small_model(input_shape):
+def Model_4(input_shape):
     model = Sequential()
 
     model.add(Conv2D(32, kernel_size=(3, 3),activation='relu',padding = 'same',input_shape=input_shape))
@@ -207,95 +201,22 @@ def smaller_model(img_height, img_width):
     model.compile(loss = 'categorical_crossentropy', optimizer = 'adam', metrics = ['accuracy'])
     return model
 
-def big_model(img_height, img_width):
-    inp = Input(shape = (img_height,img_width,3))
-    x = inp
 
-    x = Conv2D(32, (5,5), strides = 1, padding = 'same')(x)
-    x = Activation('relu')(x)
-    
-
-    x = Conv2D(32, (3,3), strides = 1, padding = 'same')(x)
-    x = Activation('relu')(x)
-    
-    x = Conv2D(32, (3,3), strides = 1, padding = 'same')(x)
-    x = Activation('relu')(x)
-
-    
-    x = MaxPool2D(pool_size = 2)(x)
-    x = Dropout(0.25)(x)    
-
-    x = Conv2D(64, (3,3), strides = 1, padding = 'same')(x)
-    x = Activation('relu')(x)
-    
-    x = Conv2D(64, (3,3), strides = 1, padding = 'same')(x)
-    x = Activation('relu')(x)
-    
-    x = Conv2D(64, (3,3), strides = 1, padding = 'same')(x)
-    x = Activation('relu')(x)
-    
-    x = MaxPool2D(pool_size = 2)(x)
-    x = Dropout(0.4)(x)
-
-    x = Conv2D(96, (3,3), strides = 1, padding = 'same')(x)
-    x = Activation('relu')(x)
-    
-    x = Conv2D(96, (3,3), strides = 1, padding = 'same')(x)
-    x = Activation('relu')(x)
-    
-    
-    x = MaxPool2D(pool_size = 2)(x)
-    x = Dropout(0.4)(x)
-
-    x = Conv2D(128, (3,3), strides = 1, padding = 'same')(x)
-    x = Activation('relu')(x)
-    
-    x = Conv2D(128, (3,3), strides = 1, padding = 'same')(x)
-    x = Activation('relu')(x)
-    
-    x = Conv2D(128, (3,3), strides = 1, padding = 'same')(x)
-    x = Activation('relu')(x)
-    x = Dropout(0.4)(x)
-
-    x = Flatten()(x)
-    x = Dense(256, activation = 'relu')(x)
-    x = Dropout(0.5)(x)
-    x = Dense(128, activation = 'relu')(x)
-    x = Dense(7, activation = 'softmax')(x)
-
-    model = Model(inputs = inp, outputs = x)
-    optimizer = Adam(lr = 0.001)
-    model.compile(loss = 'categorical_crossentropy', optimizer = optimizer, metrics = ['accuracy'])
-    
-    return model
 
 def build_model(config, img_width, img_height):
-    num_trainable = config['num_trainable']
     net_type = config['net']
 
-
-    if net_type == 'DENSENET':
-        net = DenseNet121(include_top=False,weights='imagenet', input_shape = (img_height,img_width, 3))   
-    elif net_type == 'VGG':
+    if net_type == 'VGG':
         net = VGG16(include_top=False,weights='imagenet', input_shape = (img_height,img_width, 3))
-    elif net_type == 'BIG_MODEL':
-        return big_model(img_height, img_width)
-    elif net_type == 'SMALL_MODEL':
-        return small_model((img_height, img_width,3))
-    elif net_type == 'MEDIUM_MODEL':
-        return medium_model(img_height, img_width)
-    elif net_type == 'MEDIUM2':
-        return med_2(img_height, img_width)
-    elif net_type == 'MED_RES':
-        return med_residual(img_height, img_width)
-    elif net_type == 'MINI':
-        return smaller_model(img_height, img_width)
+    elif net_type == 'CUSTOM':
+        return Model_1(img_height, img_width)  
     else:
         print("invalid input")
         return -1
     
 
-        
+
+    #Transfer learning from vgg net    
     for layer in net.layers:
         layer.trainable = False
 

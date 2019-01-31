@@ -19,7 +19,7 @@ from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from keras.preprocessing.image import ImageDataGenerator
 
 
-from models import small_model, big_model, medium_model, build_model
+from models import Model_1, build_model
 
 import deepdish as dd
 
@@ -35,15 +35,14 @@ def prepare_data(config):
     df = pd.read_csv('HAM10000_metadata.csv')
     if config['TEST'] is not None:
         print(config['TEST'])
-        print("test mode")
         base_dir = 'prepared_data_test/'
         df = df[0:10]
 
     df['age'] = df['age'].fillna(df['age'].mean())
     df['img_path'] = df['image_id'].apply(lambda x : 'data/{}.jpg'.format(x))
-    #df['img'] = df['img_path'].apply(lambda x : np.asarray(ImageOps.fit(Image.open(x), (img_width,img_height))).astype('float32'))
 
     img_data = np.empty((len(df), img_height, img_width, 3))
+    #Resize images and save
     for i,v in enumerate(df['img_path']):
         print('{} / {}'.format(i, len(df)))
         v2 = np.asarray(ImageOps.fit(Image.open(v), (img_width,img_height))).astype('float32')
@@ -54,12 +53,10 @@ def prepare_data(config):
     target_data = np.asarray(pd.get_dummies(df['dx']))
     
 
-    
-    print(target_data.shape)
     del df
     
 
-    np.random.seed(1337)
+    np.random.seed(42)
     r_ind = np.random.rand(len(img_data))
     train_ind = r_ind < 0.7
     test_ind = (r_ind>=0.7) & (r_ind < 0.85)
@@ -77,13 +74,9 @@ def prepare_data(config):
     y_val = target_data[val_ind]
     y_test = target_data[test_ind]
 
-    print(y_train.shape)
     
     if not os.path.exists(base_dir):
         os.mkdir(base_dir)
-    
-    print("saving x_im_train")
-    print(base_dir)
     
 
     np.save('{}x_im_train.npy'.format(base_dir), x_im_train)
@@ -129,12 +122,6 @@ def train(config):
 
     x_train,x_val,x_test, y_train, y_val, y_test = load_data(config)
 
-    print(x_train.shape)
-    print(y_train.shape)
-
-    print(x_val.shape)
-    print(y_val.shape)
-
     #Normalizing input
     #Rescale to [-1,1]
     x_train =(x_train)/255.*2-1
@@ -170,8 +157,6 @@ def train(config):
         d_class_weights = dict(enumerate(class_weights))
     elif cw == 2:
         print("Custom weighting")
-        #class_weights = [ 4.22440945,  2.7164557 ,  1.28349282, 13.08536585,  1.28349282,
-        #0.21447132, 10.21904762]
         class_weights = [2,2,3,1,3,0.7, 2]
         d_class_weights = dict(enumerate(class_weights))
 
@@ -180,7 +165,6 @@ def train(config):
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     filepath= os.path.join(save_dir,model_name + "-{epoch:02d}-{val_acc:.2f}.hdf5")
-    print(filepath)
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
     early_stopping = EarlyStopping(monitor = 'val_acc', min_delta = 0, patience = 7)
     rlr = ReduceLROnPlateau(monitor = 'val_acc',
@@ -205,8 +189,6 @@ def train(config):
     
     scores = model.evaluate(x_test,y_test)
 
-    print("Scores")
-    print(scores)
     
     model.save(base_dir + '/model.h5')
     dd.io.save(base_dir + '/model_scores.h5', scores)
@@ -228,6 +210,7 @@ def main():
     args = vars(parser.parse_args())
 
     now = datetime.datetime.now()
+    
     batch_size = 16
     model_name = '{}_{}_{}_{}_T_{}-{}'.format(args['net'],args['cw'],args['num_trainable'], batch_size,now.hour, now.minute)
     args['model_name'] = model_name
@@ -244,8 +227,6 @@ def main():
         args['img_width'] = 226
         args['img_height'] = 226
 
-
-    print(args)
     
     train(args)
 
